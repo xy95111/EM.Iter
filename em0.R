@@ -3,25 +3,25 @@ EM.Iter <-
   function(sdata,n.int = 5,order = 3, r1, max.iter = 1000,cov.rate = 0.1){
     # sdata <- mdata; n.int = 5;order = 3; r1 = 0; max.iter = 500;cov.rate = 0.1
     Xp<-sdata$X
-    M<-1###Ğ­±äÁ¿Î¬Êı
+    M<-ncol(Xp)###åå˜é‡ç»´æ•°
     Kn<-n.int+order
     N<-nrow(sdata)
-    ##ÉèÖÃEMËã·¨³õÖµ
+    ##è®¾ç½®EMç®—æ³•åˆå€¼
     b10<-rep(0,M) ##beta1 initial value
     b20<-rep(0,M) ##beta2 initial value
     e0<-1 ##eta initial value
     gamma0<-rep(1,Kn)
-    ###¾ùÔÈ½Úµã###
+    ###å‡åŒ€èŠ‚ç‚¹###
     knots.0 <-seq( from=min(sdata$obs), to=max(sdata$obs), by=(max(sdata$obs)-min(sdata$obs))/(n.int+1) )
-    knots<-knots.0[c(-1,-length(knots.0))]##È¥µôÊ×Î²£¬Ö»Ê£ÖĞ¼äµÄµã##
-    bl.Ci<-matrix(0,nrow=N,ncol=Kn) ##400*8µÄ¾ØÕó
+    knots<-knots.0[c(-1,-length(knots.0))]##å»æ‰é¦–å°¾ï¼Œåªå‰©ä¸­é—´çš„ç‚¹##
+    bl.Ci<-matrix(0,nrow=N,ncol=Kn) ##400*8çš„çŸ©é˜µ
     bl.Ci[,]<-iSpline(sdata$obs,degree = 2,knots=knots)
-    ###  gamma0µÄÕæÖµÓÃ×îĞ¡¶ş³ËµÃµ½£¬iÑùÌõ¹ØÓÚÕæÖµµÄ×îĞ¡¶ş³Ë½â
+    ###  gamma0çš„çœŸå€¼ç”¨æœ€å°äºŒä¹˜å¾—åˆ°ï¼Œiæ ·æ¡å…³äºçœŸå€¼çš„æœ€å°äºŒä¹˜è§£
     #gamma0 = pmax(as.numeric( ginv(bl.Ci[,]%*%t(bl.Ci[,]))%*%( bl.Ci[,]%*%(0.05*sdata$obs) ) ), 1e-5)
     
-    ## ÓÒÉ¾Ê§Êı¾İCµÄÔÚ·çÏÕ¾ØÕóYCC
+    ## å³åˆ å¤±æ•°æ®Cçš„åœ¨é£é™©çŸ©é˜µYCC
     YCC = outer(sdata$obs, sdata$obs, FUN=">=")*1
-    ##alpha³õÖµ###
+    ##alphaåˆå€¼###
     lambdak<-1/length(unique(mdata$obs))
     alpha0 = rep(0,N)
     for (i in 1:N) {
@@ -29,81 +29,81 @@ EM.Iter <-
     }
     
     #alpha0 = 1/as.numeric(t(exp(Xp*b20))%*%YCC)
-    rr.mat<-function(x) matrix(x,ncol=N,nrow=Kn,byrow=TRUE)#ÑùÌõ°´ĞĞÕ¹
-    ## »Ø¹éÏµÊıbeta1µÄµü´úÏòÁ¿
+    rr.mat<-function(x) matrix(x,ncol=N,nrow=Kn,byrow=TRUE)#æ ·æ¡æŒ‰è¡Œå±•
+    ## å›å½’ç³»æ•°beta1çš„è¿­ä»£å‘é‡
     bt1em = numeric(max.iter)
-    ## ÑùÌõÏµÊıgammaµÄµü´ú¾ØÕó, Ã¿Ò»ĞĞÊÇÒ»¸öµü´ú½á¹û
+    ## æ ·æ¡ç³»æ•°gammaçš„è¿­ä»£çŸ©é˜µ, æ¯ä¸€è¡Œæ˜¯ä¸€ä¸ªè¿­ä»£ç»“æœ
     gmem = matrix( 0, max.iter, Kn )
-    ## »Ø¹éÏµÊıbeta2µÄµü´úÏòÁ¿
+    ## å›å½’ç³»æ•°beta2çš„è¿­ä»£å‘é‡
     bt2em = numeric(max.iter)
-    ## Ğ¡hµÄµü´ú¾ØÕó
-    ## Ğ¡hÔÚÃ¿¸öC´¦¶¼ÓĞÖµ, Ö»ÊÇÔÚu=1µÄC´¦ÓĞÌø, ÆäËûµã³öÎª0, Ã¿×éĞ¡hÈÔÓĞn¸öÖµ
+    ## å°hçš„è¿­ä»£çŸ©é˜µ
+    ## å°håœ¨æ¯ä¸ªCå¤„éƒ½æœ‰å€¼, åªæ˜¯åœ¨u=1çš„Cå¤„æœ‰è·³, å…¶ä»–ç‚¹å‡ºä¸º0, æ¯ç»„å°hä»æœ‰nä¸ªå€¼
     hcem = matrix(0, max.iter, N)
-    ## ·½²îµÄµü´úÏòÁ¿, Ã¿1¸öÔªËØÊÇ1´Îµü´ú½á¹û
+    ## æ–¹å·®çš„è¿­ä»£å‘é‡, æ¯1ä¸ªå…ƒç´ æ˜¯1æ¬¡è¿­ä»£ç»“æœ
     vfem = numeric(max.iter)
-    ## EMËã·¨µü´ú³õÖµ
-    ## beta1µÄ³õÖµ
+    ## EMç®—æ³•è¿­ä»£åˆå€¼
+    ## beta1çš„åˆå€¼
     bt1em[1] = b10  
-    ## gamma0³õÖµ
+    ## gamma0åˆå€¼
     gmem[1,] = gamma0
-    ## beta2µÄ³õÖµ
+    ## beta2çš„åˆå€¼
     bt2em[1] = b20
-    ## Ğ¡hµÄ³õÖµ
+    ## å°hçš„åˆå€¼
     hcem[1,] = alpha0
-    # vfµÄ³õÖµ
+    # vfçš„åˆå€¼
     vfem[1] = e0
     i<-0
     while( i<max.iter){
       i<-i+1
-      ####### ËùÓĞ²ÎÊı¸üĞÂÒ»±à###
+      ####### æ‰€æœ‰å‚æ•°æ›´æ–°ä¸€ç¼–###
       #exb<-exp(Xp%*%bt1em[i])
       Lambda1.Ci<-bl.Ci%*%matrix(gmem[i,],ncol=1)
-      ## ºóÃæËü»á×ö·ÖÄ¸, ¿ÉÄÜ»áÓĞ0, ĞŞÕıÒ»ÏÂ, ºóÃæÆäÊµ¾Í²»ĞèÒªĞŞÕıÁË
+      ## åé¢å®ƒä¼šåšåˆ†æ¯, å¯èƒ½ä¼šæœ‰0, ä¿®æ­£ä¸€ä¸‹, åé¢å…¶å®å°±ä¸éœ€è¦ä¿®æ­£äº†
       Lambda1.Ci[which(Lambda1.Ci==0)] = 1e-5
-      ###ÖĞ¼äÏòÁ¿###
+      ###ä¸­é—´å‘é‡###
       exp.b1x = exp(bt1em[i]*Xp)
       LC.exp = Lambda1.Ci* exp.b1x ###
-      ## ÓÒÉ¾Ê§²¿·ÖµÄÖĞ¼ä±äÁ¿
+      ## å³åˆ å¤±éƒ¨åˆ†çš„ä¸­é—´å˜é‡
       exp.b2x = exp(bt2em[i]*Xp)
       HC.C = as.numeric( YCC%*%(sdata$Delta*hcem[i,]) )
       HC.exp = HC.C*exp.b2x
       tha = 1/vfem[i]
-      L<-200###ÃÉÌØ¿¨Âå¸öÊı
+      L<-200###è’™ç‰¹å¡æ´›ä¸ªæ•°
       
       if(r1>0){
         
-        bil = rgamma(L, shape=1/vfem[i], rate=1/vfem[i]) ##bilµÄÖµ£¨200¸ö£©##
+        bil = rgamma(L, shape=1/vfem[i], rate=1/vfem[i]) ##bilçš„å€¼ï¼ˆ200ä¸ªï¼‰##
         ##############
-        ###ÖĞ¼ä±äÁ¿####
+        ###ä¸­é—´å˜é‡####
         ##############
         r.mat<-function(x) matrix(x,ncol=L,nrow=N,byrow=TRUE)
         exp.v1bv2<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil)*(1+r1*LC.exp%*%bil)^(-1/r1)))
         exp.v1v2<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*(1+r1*LC.exp%*%bil)^(-1/r1)))
-        Ebi1<-exp.v1bv2/exp.v1v2 #µÚÒ»ÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
+        Ebi1<-exp.v1bv2/exp.v1v2 #ç¬¬ä¸€ç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
         exp.v1bbv2<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil^2)*(1+r1*LC.exp%*%bil)^(-1/r1)))
-        Ebi2<-exp.v1bbv2/exp.v1bv2#µÚ¶şÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
+        Ebi2<-exp.v1bbv2/exp.v1bv2#ç¬¬äºŒç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
         tt1<-rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil)))/L
         #tt2<-(1+1/tha*HC.exp)^(-tha-1)
         exp.v2_v1bv2<-tt1 - exp.v1bv2/L
         tt3<-rowSums( as.matrix(exp(-HC.exp%*%t(bil))))/L
         #tt4<-(1+1/tha*HC.exp)^(-tha)
         exp.v2_v1v2<-tt3 - exp.v1v2/L
-        Ebi3<-exp.v2_v1bv2/exp.v2_v1v2#µÚÈıÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
+        Ebi3<-exp.v2_v1bv2/exp.v2_v1v2#ç¬¬ä¸‰ç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
         tt5<-rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil^2)))/L
         #tt6<-(1+1/tha)*(1+1/tha*HC.exp)^(-tha-2)
         exp.v2_v1bbv2<-tt5- exp.v1bbv2/L
-        Ebi4<-exp.v2_v1bbv2/exp.v2_v1bv2#µÚËÄÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
-        ###biµÄÌõ¼şÆÚÍû###
+        Ebi4<-exp.v2_v1bbv2/exp.v2_v1bv2#ç¬¬å››ç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
+        ###biçš„æ¡ä»¶æœŸæœ›###
         Ebi<-(1-sdata$Delta)*(1-sdata$delta)*Ebi1+(sdata$Delta)*(1-sdata$delta)*Ebi2+(1-sdata$Delta)*(sdata$delta)*Ebi3+(sdata$Delta)*(sdata$delta)*Ebi4
         ##############
-        ###EphibiÌõ¼şÆÚÍû####
+        ###Ephibiæ¡ä»¶æœŸæœ›####
         ##############
         exp.phiv1bv2<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil)*(1+r1*LC.exp%*%bil)^(-1/r1-1)))
         Ephibi1<-exp.phiv1bv2/exp.v1v2
         exp.phiv1bbv2<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil^2)*(1+r1*LC.exp%*%bil)^(-1/r1-1)))
         Ephibi2<-exp.phiv1bbv2/exp.v1bv2
         #exp.1_phiv1bv21<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil)*(1-(1+r1*LC.exp%*%bil)^(-1/r1-1))))/L
-        ##ÏÔÊ¾½â##
+        ##æ˜¾ç¤ºè§£##
         exp.1_phiv1bv2<- tt1-rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil)*((1+r1*LC.exp%*%bil)^(-1/r1-1))))/L
         Ephibi3<-exp.1_phiv1bv2/exp.v2_v1v2
         # exp.1_phiv1bbv21<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil^2)*(1-(1+r1*LC.exp%*%bil)^(-1/r1-1))))/L
@@ -112,11 +112,11 @@ EM.Iter <-
         
         
         Ephibi4<-exp.1_phiv1bbv2/exp.v2_v1bv2
-        ###phibiµÄÌõ¼şÆÚÍû###
+        ###phibiçš„æ¡ä»¶æœŸæœ›###
         Ephibi<-(1-sdata$Delta)*(1-sdata$delta)*Ephibi1+(sdata$Delta)*(1-sdata$delta)*Ephibi2+(1-sdata$Delta)*(sdata$delta)*Ephibi3+(sdata$Delta)*(sdata$delta)*Ephibi4
         
         ##############
-        ###EziÌõ¼şÆÚÍû####
+        ###Eziæ¡ä»¶æœŸæœ›####
         ##############
         Ezi<-0
         Ezi3<-LC.exp*tt1/exp.v2_v1v2
@@ -124,10 +124,10 @@ EM.Iter <-
         Ezi<-(1-sdata$Delta)*(sdata$delta)*Ezi3+(sdata$Delta)*(sdata$delta)*Ezi4
         inv.LC = 1/Lambda1.Ci
         inv.LC[which(Lambda1.Ci==0)] = 0
-        Ezil = (Ezi*inv.LC)%*%t(gmem[i,])*(bl.Ci[,]) ###N*L¾ØÕó
+        Ezil = (Ezi*inv.LC)%*%t(gmem[i,])*(bl.Ci[,]) ###N*LçŸ©é˜µ
         
         ##############
-        ###ElogbiÌõ¼şÆÚÍû####
+        ###Elogbiæ¡ä»¶æœŸæœ›####
         ##############
         exp.v1logbv2<- rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(log(bil))*(1+r1*LC.exp%*%bil)^(-1/r1)))
         Elogbi1<-exp.v1logbv2/exp.v1v2
@@ -145,37 +145,37 @@ EM.Iter <-
       }else{
         
         
-        bil = rgamma(L, shape=1/vfem[i], rate=1/vfem[i]) ##bilµÄÖµ£¨200¸ö£©##
+        bil = rgamma(L, shape=1/vfem[i], rate=1/vfem[i]) ##bilçš„å€¼ï¼ˆ200ä¸ªï¼‰##
         ##############
-        ###ÖĞ¼ä±äÁ¿####
+        ###ä¸­é—´å˜é‡####
         ##############
         r.mat<-function(x) matrix(x,ncol=L,nrow=N,byrow=TRUE)
         exp.v1bv2<- rowSums( as.matrix(exp(-(HC.exp+LC.exp)%*%t(bil)))*r.mat(bil))
         exp.v1v2<- rowSums( as.matrix(exp(-(HC.exp+LC.exp)%*%t(bil))))
-        Ebi1<-exp.v1bv2/exp.v1v2 #µÚÒ»ÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
+        Ebi1<-exp.v1bv2/exp.v1v2 #ç¬¬ä¸€ç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
         exp.v1bbv2<- rowSums( as.matrix(exp(-(HC.exp+LC.exp)%*%t(bil))*r.mat(bil^2)))
-        Ebi2<-exp.v1bbv2/exp.v1bv2#µÚ¶şÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
+        Ebi2<-exp.v1bbv2/exp.v1bv2#ç¬¬äºŒç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
         tt1<-rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil)))/L
         #tt2<-(1+1/tha*HC.exp)^(-tha-1)
         exp.v2_v1bv2<-tt1- exp.v1bv2/L
         tt3<-rowSums( as.matrix(exp(-HC.exp%*%t(bil))))/L
         #tt4<-(1+1/tha*HC.exp)^(-tha)
         exp.v2_v1v2<-tt3- exp.v1v2/L
-        Ebi3<-exp.v2_v1bv2/exp.v2_v1v2#µÚÈıÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
+        Ebi3<-exp.v2_v1bv2/exp.v2_v1v2#ç¬¬ä¸‰ç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
         
         tt5<-rowSums( as.matrix(exp(-HC.exp%*%t(bil))*r.mat(bil^2)))/L
         #tt6<-(1+1/tha)*(1+1/tha*HC.exp)^(-tha-2)
         exp.v2_v1bbv2<-tt5- exp.v1bbv2/L
-        Ebi4<-exp.v2_v1bbv2/exp.v2_v1bv2#µÚËÄÖÖÇéĞÎbiµÄÌõ¼şÆÚÍû
-        ###biµÄÌõ¼şÆÚÍû###
+        Ebi4<-exp.v2_v1bbv2/exp.v2_v1bv2#ç¬¬å››ç§æƒ…å½¢biçš„æ¡ä»¶æœŸæœ›
+        ###biçš„æ¡ä»¶æœŸæœ›###
         Ebi<-(1-sdata$Delta)*(1-sdata$delta)*Ebi1+(sdata$Delta)*(1-sdata$delta)*Ebi2+(1-sdata$Delta)*(sdata$delta)*Ebi3+(sdata$Delta)*(sdata$delta)*Ebi4
         ##############
-        ###EphibiÌõ¼şÆÚÍû####
+        ###Ephibiæ¡ä»¶æœŸæœ›####
         ##############
         Ephibi<-Ebi
         
         ##############
-        ###EziÌõ¼şÆÚÍû####
+        ###Eziæ¡ä»¶æœŸæœ›####
         ##############
         Ezi<-0
         Ezi3<-LC.exp*tt1/exp.v2_v1v2
@@ -183,10 +183,10 @@ EM.Iter <-
         Ezi<-(1-sdata$Delta)*(sdata$delta)*Ezi3+(sdata$Delta)*(sdata$delta)*Ezi4
         inv.LC = 1/Lambda1.Ci
         inv.LC[which(Lambda1.Ci==0)] = 0
-        Ezil = (Ezi*inv.LC)%*%t(gmem[i,])*(bl.Ci[,]) ###N*L¾ØÕó
+        Ezil = (Ezi*inv.LC)%*%t(gmem[i,])*(bl.Ci[,]) ###N*LçŸ©é˜µ
         
         ##############
-        ###ElogbiÌõ¼şÆÚÍû####
+        ###Elogbiæ¡ä»¶æœŸæœ›####
         ##############
         exp.v1logbv2<- rowSums( as.matrix(exp(-(HC.exp+LC.exp)%*%t(bil))*r.mat(log(bil))))
         Elogbi1<-exp.v1logbv2/exp.v1v2
@@ -206,16 +206,16 @@ EM.Iter <-
         
       }
       #M-step
-      ## ²ÎÊı¹À¼Æ
-      ###### µÚ1²¿·Ö, beta10 Óë ÑùÌõÏµÊıgamma µÄ¹À¼Æ ##############
+      ## å‚æ•°ä¼°è®¡
+      ###### ç¬¬1éƒ¨åˆ†, beta10 ä¸ æ ·æ¡ç³»æ•°gamma çš„ä¼°è®¡ ##############
       Ezil.col = colSums( Ezil)
-      ## es.afa ÊÇbeta1µÄº¯Êı
+      ## es.afa æ˜¯beta1çš„å‡½æ•°
       es.afa = function(BT)
       {
         Ezil.col/rowSums( rr.mat(exp(BT*Xp)*Ephibi)*t(bl.Ci) )
       }
       
-      ## betaµÄ¹À¼Æ·½³Ì
+      ## betaçš„ä¼°è®¡æ–¹ç¨‹
       beta1.score = function(BT)
       {
         ss0 = rowSums( rr.mat(exp(BT*Xp)*Ephibi)*t(bl.Ci) )
@@ -226,7 +226,7 @@ EM.Iter <-
       bt1em[i+1] = nleqslv( bt1em[i], beta1.score )$x
       gmem[i+1,] = es.afa(bt1em[i+1])
       
-      ###### µÚ2²¿·Ö, beta20 Óë alpha0 µÄ¹À¼Æ ##############
+      ###### ç¬¬2éƒ¨åˆ†, beta20 ä¸ alpha0 çš„ä¼°è®¡ ##############
       
       es.hc = function(GM)
       {
@@ -235,10 +235,10 @@ EM.Iter <-
       
       
       
-      ## ÖĞ¼ä±äÁ¿
+      ## ä¸­é—´å˜é‡
       sum.uZ = sum(sdata$Delta*Xp)
       
-      ## beta2µÄ¹À¼Æ·½³Ì
+      ## beta2çš„ä¼°è®¡æ–¹ç¨‹
       beta2.score = function(GM)
       {
         exp.g.Eb = exp(GM*Xp)*Ebi
@@ -252,10 +252,10 @@ EM.Iter <-
       
       hcem[i+1,] = es.hc(bt2em[i+1])
       
-      ###### µÚ3²¿·Ö,·½²îvf µÄ¹À¼Æ ##############
-      ## ÖĞ¼ä±äÁ¿
+      ###### ç¬¬3éƒ¨åˆ†,æ–¹å·®vf çš„ä¼°è®¡ ##############
+      ## ä¸­é—´å˜é‡
       mean.log.bf = mean(Elogbi) - mean(Ebi)
-      ## thetaµÄÄ¿±êº¯Êı
+      ## thetaçš„ç›®æ ‡å‡½æ•°
       theta.neg.ll = function(TH)
       {
         ll = TH*log(TH) - lgamma(TH) + TH*mean.log.bf
